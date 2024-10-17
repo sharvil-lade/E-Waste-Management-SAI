@@ -1,9 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import axios from "axios";
-
 
 const SignUp: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +16,7 @@ const SignUp: React.FC = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [passwordMatch, setPasswordMatch] = useState(true);
+  const [role, setRole] = useState("buyer"); // State for role selection (buyer/seller)
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -32,6 +32,10 @@ const SignUp: React.FC = () => {
     }));
   };
 
+  const handleRoleChange = (selectedRole: string) => {
+    setRole(selectedRole);
+  };
+
   const register = async () => {
     if (formData.password !== formData.confirmPassword) {
       setPasswordMatch(false);
@@ -41,13 +45,12 @@ const SignUp: React.FC = () => {
     try {
       const response = await axios.post(
         "https://elocate-server.onrender.com/api/v1/auth/register",
-        formData
+        { ...formData, role }
       );
 
       toast.success("Registration Successful!");
-
       window.location.href = "/sign-in";
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Register failed:", error);
       toast.error(`Registration Failed. ${error.response.data.message}`);
     }
@@ -56,16 +59,41 @@ const SignUp: React.FC = () => {
   return (
     <>
       <div className="my-3 text-center">
-        <span className=" text-4xl font-bold">Welcome to Elocate</span>
+        <span className="text-4xl font-bold">Welcome to Elocate</span>
         <span className="font-light text-gray-400 mb-4">
           Please enter your details to register
         </span>
       </div>
 
-      <div className="mx-auto w-4/5 md:w-256 h-[90vh] md:h-[70vh]">
-        <div className="relative flex flex-col md:flex-row p-6 bg-white shadow-2xl rounded-2xl">
-          {/* Left Column */}
-          <div className="flex flex-col justify-center p-4 md:w-1/2">
+      {/* Role Selection as Buttons */}
+      <div className="mx-auto w-4/5 md:w-256">
+        <div className="flex justify-center space-x-4 mb-4">
+          <button
+            className={`px-40 py-2 font-bold rounded-md ${
+              role === "buyer"
+                ? "bg-black text-white"
+                : "bg-gray-200 text-black hover:bg-gray-300"
+            }`}
+            onClick={() => handleRoleChange("buyer")}
+          >
+            Buyer
+          </button>
+          <button
+            className={`px-40 py-2 font-bold rounded-md ${
+              role === "seller"
+                ? "bg-black text-white"
+                : "bg-gray-200 text-black hover:bg-gray-300"
+            }`}
+            onClick={() => handleRoleChange("seller")}
+          >
+            Seller
+          </button>
+        </div>
+
+        <div className="relative flex flex-col p-6 bg-white shadow-2xl rounded-2xl">
+          {/* Common Fields for Both Buyer and Seller */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left Column */}
             <div className="py-4">
               <span className="mb-2 text-md">UserName</span>
               <input
@@ -103,13 +131,8 @@ const SignUp: React.FC = () => {
                 onChange={handleInputChange}
                 value={formData.password}
                 required
-
               />
             </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="flex flex-col justify-center p-4 md:w-1/2">
             <div className="py-4">
               <span className="mb-2 text-md">Phone Number</span>
               <input
@@ -121,7 +144,6 @@ const SignUp: React.FC = () => {
                 onChange={handleInputChange}
                 value={formData.phoneNumber}
                 required
-
               />
             </div>
             <div className="py-4">
@@ -135,7 +157,6 @@ const SignUp: React.FC = () => {
                 onChange={handleInputChange}
                 value={formData.fullName}
                 required
-
               />
             </div>
             <div className="py-4">
@@ -151,11 +172,36 @@ const SignUp: React.FC = () => {
                 required
               />
             </div>
-         
           </div>
+
+          {/* Additional Fields for Buyer */}
+          {role === "buyer" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="py-4">
+                <span className="mb-2 text-md">Preferred Pickup Location</span>
+                <input
+                  type="text"
+                  className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+                  name="budgetRange"
+                  placeholder="Preferred Pickup Location"
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="py-4">
+                <span className="mb-2 text-md">Type of E-Waste</span>
+                <input
+                  type="text"
+                  className="w-full p-2 sign-field rounded-md placeholder:font-light placeholder:text-gray-500"
+                  name="propertyType"
+                  placeholder="Type of E-Waste"
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          )}
         </div>
+
         <div className="flex justify-between py-4">
-      
           <label className="flex text-xl">
             <input
               type="checkbox"
@@ -171,11 +217,13 @@ const SignUp: React.FC = () => {
             Forgot Password?
           </Link>
         </div>
+
         {!passwordMatch && (
-              <div className="text-red-600 text-sm">
-                Password and Confirm Password do not match.
-              </div>
-            )}
+          <div className="text-red-600 text-sm">
+            Password and Confirm Password do not match.
+          </div>
+        )}
+
         <button
           className="w-full bg-black mt-4 text-white p-2 rounded-lg mb-6 hover:bg-emerald-400 hover:text-black hover:border hover:border-gray-300"
           onClick={register}
